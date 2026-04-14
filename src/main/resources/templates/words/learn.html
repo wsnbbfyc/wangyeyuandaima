@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>学习单词 - 四级词汇</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --primary: [[${themePrimaryColor}]];
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, var(--primary) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, var(--primary) 0%, transparent 50%),
+                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: -1;
+        }
+        
+        body.has-bg-image::before {
+            background: url([[${themeBackgroundImage}]]) no-repeat center center fixed !important;
+            background-size: cover;
+        }
+        
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .progress {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            background: var(--glass-bg);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        .word-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .word-type {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .word {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .pronunciation {
+            font-size: 20px;
+            color: var(--primary);
+            margin-bottom: 25px;
+        }
+        
+        .meaning {
+            font-size: 24px;
+            color: var(--text);
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .example-section {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            text-align: left;
+            margin-top: 20px;
+        }
+        
+        .example {
+            font-size: 16px;
+            color: var(--text);
+            font-style: italic;
+            line-height: 1.6;
+        }
+        
+        .example-translation {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 16px 40px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(52, 199, 89, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(255, 107, 107, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        
+        .back-link:hover {
+            color: var(--primary);
+        }
+        
+        .completion-card {
+            text-align: center;
+            padding: 60px 40px;
+        }
+        
+        .completion-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .completion-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .completion-text {
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 768px) {
+            .word { font-size: 36px; }
+            .meaning { font-size: 20px; }
+            .action-buttons { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" th:style="'width: ' + (${currentIndex} * 100.0 / ${#lists.size(words)}) + '%'"></div>
+            </div>
+            <span class="progress-text" th:text="${currentIndex + 1} + ' / ' + ${#lists.size(words)}">1 / 10</span>
+        </div>
+        
+        <div th:if="${currentIndex} < ${#lists.size(words)}" class="word-card">
+            <span class="word-type" th:text="${words[currentIndex].wordType}">v.</span>
+            <div class="word" th:text="${words[currentIndex].word}">word</div>
+            <div class="pronunciation" th:text="${words[currentIndex].pronunciation}">[wɜːrd]</div>
+            <div class="meaning" th:text="${words[currentIndex].meaning}">meaning</div>
+            
+            <div class="example-section">
+                <div class="example" th:text="${words[currentIndex].example}">example</div>
+                <div class="example-translation" th:text="${words[currentIndex].exampleTranslation}">translation</div>
+            </div>
+        </div>
+        
+        <div th:if="${currentIndex} >= ${#lists.size(words)}" class="word-card completion-card">
+            <div class="completion-icon">🎉</div>
+            <div class="completion-title">学习完成！</div>
+            <p class="completion-text">你已完成本轮学习，继续保持！</p>
+            <div class="action-buttons">
+                <a href="/words" class="btn btn-secondary">返回列表</a>
+                <a href="/words/learn" class="btn btn-success">再学一轮</a>
+            </div>
+        </div>
+        
+        <div th:if="${currentIndex} < ${#lists.size(words)}" class="action-buttons">
+            <form th:action="@{/words/mark-learned/{id}(id=${words[currentIndex].id})}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-success">✓ 记住了</button>
+            </form>
+            <form th:action="@{/words/mark-wrong/{id}(id=${words[currentIndex].id})}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-danger">✗ 没记住</button>
+            </form>
+        </div>
+        
+        <div th:if="${currentIndex} < ${#lists.size(words)}" class="action-buttons" style="margin-top: 20px;">
+            <a th:href="@{/words/learn(page=${currentIndex + 1})}" class="btn btn-secondary" th:if="${currentIndex} < ${#lists.size(words) - 1}">
+                跳过 →
+            </a>
+            <a href="/words" class="btn btn-secondary">退出学习</a>
+        </div>
+        
+        <a href="/words" class="back-link">← 返回词汇列表</a>
+    </div>
+    
+    <script>
+        var bgImage = '[[${themeBackgroundImage}]]';
+        if (bgImage && bgImage.trim() !== '' && bgImage !== 'null') {
+            document.body.classList.add('has-bg-image');
+        }
+    </script>
+</body>
+</html>

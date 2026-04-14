@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四级词汇 - 我的个人网站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --primary: [[${themePrimaryColor}]];
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, var(--primary) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, var(--primary) 0%, transparent 50%),
+                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: -1;
+        }
+        
+        body.has-bg-image::before {
+            background: url([[${themeBackgroundImage}]]) no-repeat center center fixed !important;
+            background-size: cover;
+        }
+        
+        a { text-decoration: none; color: inherit; }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 30px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        
+        .nav-logo { font-size: 24px; margin-right: 20px; }
+        
+        nav a {
+            color: var(--text-secondary);
+            font-size: 14px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        
+        nav a:hover { color: var(--text); background: var(--glass-bg); }
+        nav a.active { color: var(--primary); background: rgba(102, 126, 234, 0.2); }
+        
+        .nav-dropdown { position: relative; display: inline-block; flex-shrink: 0; }
+        .nav-dropdown-btn { color: var(--text-secondary); font-size: 14px; padding: 8px 16px; border-radius: 20px; background: transparent; border: none; cursor: pointer; white-space: nowrap; }
+        .nav-dropdown-btn:hover { color: var(--text); background: var(--glass-bg); }
+        .nav-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background: rgba(30, 30, 50, 0.98); border: 1px solid var(--glass-border); border-radius: 12px; min-width: 140px; padding: 8px 0; z-index: 1001; white-space: nowrap; }
+        .nav-dropdown:hover .nav-dropdown-content { display: block; }
+        .nav-dropdown-content a { display: flex; align-items: center; gap: 8px; padding: 10px 16px; color: var(--text-secondary); font-size: 13px; }
+        .nav-dropdown-content a:hover { background: var(--glass-bg); color: var(--text); }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 80px 20px 50px;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, #a8c0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .btn {
+            padding: 12px 28px;
+            border-radius: 25px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4); }
+        
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.2); }
+        
+        .search-box {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .search-box input {
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 1px solid var(--glass-border);
+            background: var(--glass-bg);
+            color: var(--text);
+            font-size: 15px;
+            width: 300px;
+            outline: none;
+        }
+        
+        .search-box input::placeholder { color: var(--text-secondary); }
+        .search-box input:focus { border-color: var(--primary); }
+        
+        .word-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        
+        .word-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 25px;
+            transition: all 0.3s;
+        }
+        
+        .word-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .word-card.learned {
+            border-color: rgba(52, 199, 89, 0.5);
+        }
+        
+        .word-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+        
+        .word {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        
+        .word-type {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: var(--glass-bg);
+            padding: 3px 8px;
+            border-radius: 10px;
+        }
+        
+        .pronunciation {
+            font-size: 14px;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .meaning {
+            font-size: 16px;
+            color: var(--text);
+            margin-bottom: 12px;
+            line-height: 1.5;
+        }
+        
+        .example {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-style: italic;
+            border-left: 3px solid var(--primary);
+            padding-left: 10px;
+            margin-top: 10px;
+        }
+        
+        .example-translation {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+        
+        .learned-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(52, 199, 89, 0.2);
+            color: #34c759;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .progress-bar {
+            background: var(--glass-bg);
+            border-radius: 10px;
+            height: 8px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        @media (max-width: 768px) {
+            .stats { flex-direction: column; gap: 15px; }
+            .actions { flex-direction: column; }
+            .word-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="/" class="nav-logo">🌸</a>
+            <a href="/diaries">随笔</a>
+            <div class="nav-dropdown">
+                <span class="nav-dropdown-btn">更多 ▾</span>
+                <div class="nav-dropdown-content">
+                    <a href="/diaries/new">✏️ 写随笔</a>
+                    <a href="/tags">🏷️ 标签</a>
+                    <a href="/favorites">⭐ 收藏</a>
+                    <a href="/chat">🤖 AI聊天</a>
+                    <a href="/words" class="active">📚 单词</a>
+                    <a href="/files">📁 资料</a>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <a href="/settings">⚙️ 设置</a>
+            <a href="/logout" style="color: #ff6b6b;">退出</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="header">
+            <h1>📚 四级词汇学习</h1>
+            <p style="color: var(--text-secondary);">掌握核心词汇，轻松通过四级考试</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" th:text="${totalCount}">0</div>
+                <div class="stat-label">总词汇量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" th:text="${learnedCount}" style="color: #34c759;">0</div>
+                <div class="stat-label">已掌握</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" th:text="${unlearnedCount}">0</div>
+                <div class="stat-label">待学习</div>
+            </div>
+        </div>
+        
+        <div class="progress-bar" th:if="${totalCount > 0}">
+            <div class="progress-fill" th:style="'width: ' + (${learnedCount} * 100.0 / ${totalCount}) + '%'"></div>
+        </div>
+        
+        <div class="actions">
+            <a href="/words/learn" class="btn btn-primary">📖 开始学习</a>
+            <a href="/words/quiz" class="btn btn-primary">🎯 词汇测试</a>
+            <form th:action="@{/words/reset}" method="post" style="display: inline;">
+                <button type="submit" class="btn btn-secondary" onclick="return confirm('确定要重置学习进度吗？')">🔄 重置进度</button>
+            </form>
+        </div>
+        
+        <div class="search-box">
+            <form th:action="@{/words/search}" method="get">
+                <input type="text" name="keyword" placeholder="搜索单词..." th:value="${keyword}" />
+            </form>
+        </div>
+        
+        <div class="word-grid">
+            <div class="word-card" th:each="word : ${words}" th:classappend="${word.isLearned} ? 'learned'">
+                <div class="word-header">
+                    <span class="word" th:text="${word.word}">word</span>
+                    <span class="word-type" th:text="${word.wordType}">v.</span>
+                </div>
+                <div class="pronunciation" th:text="${word.pronunciation}">[wɜːrd]</div>
+                <div class="meaning" th:text="${word.meaning}">meaning</div>
+                <div class="example" th:text="${word.example}">example sentence</div>
+                <div class="example-translation" th:text="${word.exampleTranslation}">翻译</div>
+                <div class="learned-badge" th:if="${word.isLearned}">✓ 已掌握</div>
+            </div>
+        </div>
+        
+        <div th:if="${#lists.isEmpty(words)}" style="text-align: center; padding: 50px; color: var(--text-secondary);">
+            <p style="font-size: 48px; margin-bottom: 20px;">📭</p>
+            <p>暂无词汇数据</p>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2026 四级词汇学习 · 祝考试顺利</p>
+    </footer>
+    
+    <script>
+        var bgImage = '[[${themeBackgroundImage}]]';
+        if (bgImage && bgImage.trim() !== '' && bgImage !== 'null') {
+            document.body.classList.add('has-bg-image');
+        }
+    </script>
+</body>
+</html>
