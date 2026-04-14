@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>词汇测试 - 四级词汇</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --primary: [[${themePrimaryColor}]];
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, var(--primary) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, var(--primary) 0%, transparent 50%),
+                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: -1;
+        }
+        
+        body.has-bg-image::before {
+            background: url([[${themeBackgroundImage}]]) no-repeat center center fixed !important;
+            background-size: cover;
+        }
+        
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 60px 20px;
+        }
+        
+        .progress {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            background: var(--glass-bg);
+            border-radius: 10px;
+            height: 8px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+        
+        .progress-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        
+        .question-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .question-label {
+            font-size: 16px;
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .word {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .pronunciation {
+            font-size: 18px;
+            color: var(--primary);
+        }
+        
+        .options {
+            display: grid;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .option {
+            background: var(--glass-bg);
+            border: 2px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 18px 25px;
+            font-size: 16px;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+        }
+        
+        .option:hover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .option.correct {
+            border-color: #34c759;
+            background: rgba(52, 199, 89, 0.2);
+        }
+        
+        .option.wrong {
+            border-color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+        }
+        
+        .option.disabled {
+            pointer-events: none;
+            opacity: 0.7;
+        }
+        
+        .result-icon {
+            font-size: 60px;
+            margin-bottom: 15px;
+        }
+        
+        .result-title {
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .result-detail {
+            color: var(--text-secondary);
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn {
+            padding: 14px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: var(--glass-bg);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .word-info {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 16px;
+            padding: 25px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .word-info-row {
+            margin-bottom: 10px;
+        }
+        
+        .word-info-label {
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+        
+        .word-info-value {
+            font-size: 16px;
+            margin-top: 3px;
+        }
+        
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: var(--text-secondary);
+            font-size: 15px;
+        }
+        
+        .back-link:hover {
+            color: var(--primary);
+        }
+        
+        @media (max-width: 768px) {
+            .word { font-size: 32px; }
+            .action-buttons { flex-direction: column; }
+            .btn { width: 100%; text-align: center; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" th:style="'width: ' + (${currentIndex} * 100.0 / ${#lists.size(words)}) + '%'"></div>
+            </div>
+            <span class="progress-text" th:text="${currentIndex + 1} + ' / ' + ${#lists.size(words)}">1 / 10</span>
+        </div>
+        
+        <div th:if="${currentIndex} < ${#lists.size(words)}" class="question-card">
+            <p class="question-label">请选择正确的中文释义</p>
+            <div class="word" th:text="${words[currentIndex].word}">word</div>
+            <div class="pronunciation" th:text="${words[currentIndex].pronunciation}">[wɜːrd]</div>
+            
+            <div class="options">
+                <button class="option" th:each="option, iter : ${words[currentIndex].meaning.split('[,，]')}" 
+                        th:text="${option.trim()}" 
+                        th:onclick="'checkAnswer(this, ' + ${iter.index} + ')'">option</button>
+            </div>
+        </div>
+        
+        <div th:if="${currentIndex} >= ${#lists.size(words)}" class="question-card" style="text-align: center;">
+            <div class="result-icon">🎉</div>
+            <div class="result-title">测试完成！</div>
+            <p class="result-detail">你已经完成了本轮测试，继续加油！</p>
+            <div class="action-buttons">
+                <a href="/words" class="btn btn-secondary">返回列表</a>
+                <a href="/words/quiz" class="btn btn-primary">再来一轮</a>
+            </div>
+        </div>
+        
+        <a href="/words" class="back-link">← 返回词汇列表</a>
+    </div>
+    
+    <script>
+        var bgImage = '[[${themeBackgroundImage}]]';
+        if (bgImage && bgImage.trim() !== '' && bgImage !== 'null') {
+            document.body.classList.add('has-bg-image');
+        }
+        
+        function checkAnswer(btn, index) {
+            var buttons = document.querySelectorAll('.option');
+            buttons.forEach(function(b) {
+                b.classList.add('disabled');
+            });
+            btn.classList.add('correct');
+            
+            setTimeout(function() {
+                window.location.href = '/words/quiz?page=' + (parseInt('[[${currentIndex}]]') + 1);
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

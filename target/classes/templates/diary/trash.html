@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>回收站 - 我的个人网站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --primary: [[${themePrimaryColor}]];
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, [[${themePrimaryColor}]] 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, [[${themePrimaryColor}]] 0%, transparent 50%),
+                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        
+        body.has-bg-image::before {
+            background: url([[${themeBackgroundImage}]]) no-repeat center center fixed !important;
+            background-size: cover;
+        }
+        
+        a { text-decoration: none; color: inherit; }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+        
+        nav a {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        
+        nav a:hover {
+            color: var(--text);
+            background: var(--glass-bg);
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 100px 20px 50px;
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 45px;
+            margin-bottom: 30px;
+        }
+        
+        .page-title {
+            font-size: 36px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 35px;
+            background: linear-gradient(135deg, #fff 0%, #a8c0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .alert {
+            padding: 14px 18px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        
+        .alert-success {
+            background: rgba(40, 167, 69, 0.2);
+            color: #75ff91;
+            border: 1px solid rgba(40, 167, 69, 0.3);
+        }
+        
+        .diary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+        }
+        
+        .diary-card {
+            background: rgba(255, 107, 107, 0.1);
+            border: 1px solid rgba(255, 107, 107, 0.3);
+            border-radius: 20px;
+            padding: 28px;
+            transition: all 0.4s ease;
+        }
+        
+        .diary-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.2);
+        }
+        
+        .diary-card h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        
+        .diary-card p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            line-height: 1.7;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .diary-card .meta {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-bottom: 15px;
+        }
+        
+        .action-btns {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            padding: 10px 20px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s;
+            cursor: pointer;
+            border: none;
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #218838);
+            color: #fff;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545, #c82333);
+            color: #fff;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        
+        .nav-logo { font-size: 22px; margin-right: 15px; flex-shrink: 0; }
+        
+        nav a {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        nav a:hover {
+            color: var(--text);
+            background: var(--glass-bg);
+        }
+        
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        
+        .nav-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            min-width: 120px;
+            padding: 8px 0;
+            z-index: 1001;
+            white-space: nowrap;
+        }
+        
+        .nav-dropdown:hover .nav-dropdown-content {
+            display: block;
+        }
+        
+        .nav-dropdown-content a {
+            display: block;
+            padding: 10px 16px;
+            border-radius: 0;
+        }
+        
+        @media (max-width: 768px) {
+            .page-title { font-size: 28px; }
+            .glass-card { padding: 30px 20px; }
+            .action-btns { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="/" class="nav-logo">🌸</a>
+            <a href="/diaries">随笔</a>
+            <div class="nav-dropdown">
+                <a href="#">更多 ▾</a>
+                <div class="nav-dropdown-content">
+                    <a href="/diaries/new">✏️ 写随笔</a>
+                    <a href="/tags">🏷️ 标签</a>
+                    <a href="/favorites">⭐ 收藏</a>
+                    <a href="/chat">🤖 AI聊天</a>
+                    <a href="/words">📚 四级单词</a>
+                    <a href="/files">📁 资料</a>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <a href="/settings">⚙️ 设置</a>
+            <a href="/logout" style="color: #ff6b6b;">退出</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="glass-card">
+            <h1 class="page-title">🗑️ 回收站</h1>
+            
+            <div class="alert alert-success" th:if="${success}" th:text="${success}"></div>
+            
+            <div class="diary-grid" th:if="${not #lists.isEmpty(diaries)}">
+                <div class="diary-card" th:each="diary : ${diaries}">
+                    <h3 th:text="${diary.title}">随笔标题</h3>
+                    <p th:text="${diary.content}">随笔内容</p>
+                    <span class="meta" th:text="'删除于: ' + ${#temporals.format(diary.updateTime, 'yyyy-MM-dd HH:mm')}">删除时间</span>
+                    <div class="action-btns">
+                        <form th:action="@{/diaries/{id}/restore(id=${diary.id})}" method="post">
+                            <button type="submit" class="btn btn-success">🔄 恢复</button>
+                        </form>
+                        <form th:action="@{/diaries/{id}/permanent(id=${diary.id})}" method="post" 
+                              onsubmit="return confirm('确定要永久删除吗？此操作不可恢复！')">
+                            <button type="submit" class="btn btn-danger">🗑️ 永久删除</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="empty-state" th:if="${#lists.isEmpty(diaries)}">
+                <h2>回收站是空的</h2>
+                <p>删除的随笔会在这里显示</p>
+                <a href="/diaries" class="btn btn-success" style="display: inline-block; margin-top: 20px; text-decoration: none;">返回随笔列表</a>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2026 我的个人网站</p>
+    </footer>
+    
+    <script>
+        var bgImage = '[[${themeBackgroundImage}]]';
+        if (bgImage && bgImage.trim() !== '' && bgImage !== 'null') {
+            document.body.classList.add('has-bg-image');
+        }
+    </script>
+</body>
+</html>

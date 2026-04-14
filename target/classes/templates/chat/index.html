@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 聊天 - 我的个人网站</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            --primary: [[${themePrimaryColor}]];
+            --text: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, [[${themePrimaryColor}]] 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, [[${themePrimaryColor}]] 0%, transparent 50%),
+                linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            z-index: -2;
+        }
+        
+        body::after {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: -1;
+        }
+        
+        body.has-bg-image::before {
+            background: url([[${themeBackgroundImage}]]) no-repeat center center fixed !important;
+            background-size: cover;
+        }
+        
+        a { text-decoration: none; color: inherit; }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        nav ul {
+            display: flex;
+            list-style: none;
+            justify-content: space-around;
+            width: 100%;
+            max-width: 900px;
+            padding: 0 20px;
+        }
+        
+        nav a {
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 25px;
+            transition: all 0.3s;
+        }
+        
+        nav a:hover {
+            color: var(--text);
+            background: var(--glass-bg);
+        }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 100px 20px 30px;
+            height: calc(100vh - 130px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            box-shadow: var(--glass-shadow);
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .page-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #fff 0%, #a8c0ff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .provider-selector {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+        }
+        
+        .provider-select {
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+        }
+        
+        .provider-select option {
+            background: #1a1a2e;
+            color: white;
+        }
+        
+        .current-provider {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .provider-form {
+            display: inline;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            font-size: 15px;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .message.user {
+            align-self: flex-end;
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 5px;
+        }
+        
+        .message.ai {
+            align-self: flex-start;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1px solid var(--glass-border);
+            color: var(--text);
+            border-bottom-left-radius: 5px;
+        }
+        
+        .message.ai::before {
+            content: '🤖';
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .message.user::before {
+            content: '👤';
+            display: inline-block;
+            margin-right: 8px;
+        }
+        
+        .message-content {
+            white-space: pre-wrap;
+        }
+        
+        .chat-input-area {
+            display: flex;
+            gap: 12px;
+            padding-top: 15px;
+            border-top: 1px solid var(--glass-border);
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 14px 20px;
+            border-radius: 50px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        .chat-input:focus {
+            border-color: var(--primary);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        
+        .chat-input::placeholder {
+            color: var(--text-secondary);
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .chat-actions {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 15px;
+            justify-content: center;
+        }
+        
+        .quick-reply {
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .quick-reply:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        nav {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+        
+        .nav-left, .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+        
+        .nav-logo { font-size: 22px; margin-right: 15px; flex-shrink: 0; }
+        
+        nav a {
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            padding: 8px 14px;
+            border-radius: 20px;
+            transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        nav a:hover {
+            color: var(--text);
+            background: var(--glass-bg);
+        }
+        
+        .nav-dropdown {
+            position: relative;
+            display: inline-block;
+            flex-shrink: 0;
+        }
+        
+        .nav-dropdown-content {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            background: rgba(30, 30, 50, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            min-width: 120px;
+            padding: 8px 0;
+            z-index: 1001;
+            white-space: nowrap;
+        }
+        
+        .nav-dropdown:hover .nav-dropdown-content {
+            display: block;
+        }
+        
+        .nav-dropdown-content a {
+            display: block;
+            padding: 10px 16px;
+            border-radius: 0;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 15px 20px;
+            color: var(--text-secondary);
+            font-size: 13px;
+        }
+        
+        @media (max-width: 768px) {
+            .container { padding: 80px 10px 20px; }
+            .glass-card { padding: 15px; }
+            .message { max-width: 90%; }
+            .chat-input-area { flex-direction: column; }
+            .btn { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-left">
+            <a href="/" class="nav-logo">🌸</a>
+            <a href="/diaries">随笔</a>
+            <div class="nav-dropdown">
+                <a href="#">更多 ▾</a>
+                <div class="nav-dropdown-content">
+                    <a href="/diaries/new">✏️ 写随笔</a>
+                    <a href="/tags">🏷️ 标签</a>
+                    <a href="/favorites">⭐ 收藏</a>
+                    <a href="/chat">🤖 AI聊天</a>
+                    <a href="/words">📚 四级单词</a>
+                    <a href="/files">📁 资料</a>
+                </div>
+            </div>
+        </div>
+        <div class="nav-right">
+            <a href="/settings">⚙️ 设置</a>
+            <a href="/logout" style="color: #ff6b6b;">退出</a>
+        </div>
+    </nav>
+    
+    <div class="container">
+        <div class="glass-card">
+            <h1 class="page-title">🤖 AI 聊天助手</h1>
+            
+            <div class="provider-selector">
+                <form th:action="@{/chat/provider}" method="post" class="provider-form">
+                    <select name="provider" class="provider-select" onchange="this.form.submit()">
+                        <option value="local" th:selected="${aiProvider == 'local'}">🌱 本地AI</option>
+                        <option value="deepseek" th:selected="${aiProvider == 'deepseek'}">🔮 DeepSeek</option>
+                        <option value="openai" th:selected="${aiProvider == 'openai'}">⚡ OpenAI</option>
+                    </select>
+                </form>
+                <span class="current-provider">当前: <span th:text="${aiProvider == 'local' ? '🌱 本地AI' : (aiProvider == 'deepseek' ? '🔮 DeepSeek' : '⚡ OpenAI')}"></span></span>
+            </div>
+            
+            <div class="quick-replies">
+                <span class="quick-reply" onclick="sendQuickMessage('你好')">你好</span>
+                <span class="quick-reply" onclick="sendQuickMessage('我的随笔数量')">随笔数量</span>
+                <span class="quick-reply" onclick="sendQuickMessage('帮助')">帮助</span>
+                <span class="quick-reply" onclick="sendQuickMessage('今天怎么样')">今天怎么样</span>
+            </div>
+            
+            <div class="chat-messages" id="chatMessages">
+                <div class="message ai">
+                    <span class="message-content">你好！我是AI助手，可以和你聊天、回答问题～ 😊
+
+你可以问我：
+• 关于随笔和标签的问题
+• 日常聊天
+• 获取帮助信息</span>
+                </div>
+                
+                <div th:each="msg : ${messages}" th:class="${msg.role == 'user'} ? 'message user' : 'message ai'">
+                    <span class="message-content" th:text="${msg.content}"></span>
+                </div>
+            </div>
+            
+            <form th:action="@{/chat/send}" method="post" class="chat-input-area">
+                <input type="text" name="message" class="chat-input" placeholder="输入消息..." autocomplete="off" required/>
+                <button type="submit" class="btn btn-primary">发送</button>
+            </form>
+            
+            <div class="chat-actions">
+                <form th:action="@{/chat/clear}" method="post">
+                    <button type="submit" class="btn btn-secondary">🗑️ 清空聊天</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <footer>
+        <p>&copy; 2026 我的个人网站 · AI 聊天助手</p>
+    </footer>
+    
+    <script>
+        var bgImage = '[[${themeBackgroundImage}]]';
+        if (bgImage && bgImage.trim() !== '' && bgImage !== 'null') {
+            document.body.classList.add('has-bg-image');
+        }
+        
+        function sendQuickMessage(msg) {
+            document.querySelector('.chat-input').value = msg;
+            document.querySelector('.chat-input-area').submit();
+        }
+        
+        document.querySelector('.chat-messages').scrollTop = document.querySelector('.chat-messages').scrollHeight;
+    </script>
+</body>
+</html>
